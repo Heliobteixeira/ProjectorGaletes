@@ -1,0 +1,14 @@
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\obj\x86\Debug\ProjectorGaletes.csprojResolveAssemblyReference.cache
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\bin\Debug\ProjectorGaletes.exe.config
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\bin\Debug\ProjectorGaletes.exe
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\bin\Debug\ProjectorGaletes.pdb
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\bin\Debug\Gwen.dll
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\bin\Debug\Gwen.Renderer.OpenTK.dll
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\bin\Debug\OpenTK.dll
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\bin\Debug\OpenTK.GLControl.dll
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\bin\Debug\OpenTK.pdb
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\obj\x86\Debug\ProjectorGaletes.exe
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\obj\x86\Debug\ProjectorGaletes.pdb
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\bin\Debug\Content\DefaultSkin.png
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\bin\Debug\Content\DefaultSkin.psd
+d:\1520\documents\visual studio 2010\Projects\ProjectorGaletes\ProjectorGaletes\bin\Debug\Content\OpenSans.ttf
