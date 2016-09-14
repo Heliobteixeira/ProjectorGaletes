@@ -73,17 +73,17 @@ namespace ProjectorGaletes
             {
                 bool success;
                 //TODO: Verificar se nome projecto é válido (REGEX)
-                try
-                {
+                //try
+                //{
                     LoadWinding(value);
                     success = true;
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine("Não foi possível carregar o projecto '{0}'", value);
-                    success = false;
-                    throw;
-                }
+               // }
+               // catch (Exception)
+               // {
+              //      Console.WriteLine("Não foi possível carregar o projecto '{0}'", value);
+               //     success = false;
+              //      throw;
+              //  }
 
                 if (success) { _selectedProject = value; };
 
@@ -570,6 +570,8 @@ namespace ProjectorGaletes
         private void LoadWinding(string project)
         {
             conjuntoBobinagem = new Winding(project);
+            conjuntoBobinagem.cacheToDB();
+
             gui.fillUpAvailableCoilsComboBox(conjuntoBobinagem.coilsList());
             //selectedCoilNbr = 1;
             selectedCoilNbr = conjuntoBobinagem.Keys.Min(); // Selecciona a menor galete da Winding

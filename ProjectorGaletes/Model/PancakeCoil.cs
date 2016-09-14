@@ -12,6 +12,11 @@ namespace ProjectorGaletes
             public float Dist;
             public int espira;
             public int count;
+
+            public string rawString
+            {
+                get { return "***cruzamentos***"; }
+            }
         }
 
         public int Nr;
@@ -95,7 +100,6 @@ namespace ProjectorGaletes
             }
             
         }
-
         
 
 

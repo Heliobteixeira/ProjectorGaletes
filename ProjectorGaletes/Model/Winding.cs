@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Configuration;
+using System.Data.SqlClient;
 
 namespace ProjectorGaletes
 {
@@ -8,11 +10,16 @@ namespace ProjectorGaletes
     {
         //private Dictionary<string, string>[] dadosBob;
 
+        private string dbConnectionString = ConfigurationManager.ConnectionStrings["DBConString"].ConnectionString;
+        private string insertCoil_StorProcName = "ENGIFOLHABOB_insertCoil";
+        private string getWindingData_StorProcName = "ENGIFOLHABOB_getDadosBobProjecto";
+        private string _projecto;
 
         public Winding(string strProjecto)
         {
             Dictionary<string, string>[] dadosBob = Treewscallparser.getDadosBob(strProjecto);
             parseTreewsData(dadosBob);
+            _projecto = strProjecto;
             Console.WriteLine("Dados do projecto {0} carregados", strProjecto);
         }
 
@@ -105,6 +112,45 @@ namespace ProjectorGaletes
             }
 
         }
+
+        public void cacheToDB()
+        {
+            string storedProcedure = insertCoil_StorProcName;
+            SQLManager sqlManager = new SQLManager(ConfigurationManager.ConnectionStrings["DBConString"].ConnectionString);
+            foreach (PancakeCoil coil in this.Values)
+            {
+                SqlParameter[] parametrosSQL = 
+                {
+                    new SqlParameter("@Projecto", _projecto),
+                    new SqlParameter("@Mandril_C", coil.mandrel.C),
+                    new SqlParameter("@Mandril_E", coil.mandrel.E),
+                    new SqlParameter("@Mandril_Ri", coil.mandrel.Ri),
+                    new SqlParameter("@Mandril_Hr", coil.mandrel.HR),
+                    new SqlParameter("@Mandril_H", coil.mandrel.H),
+                    new SqlParameter("@Mandril_F", coil.mandrel.F),
+                    new SqlParameter("@Galete_Nr", coil.Nr),
+                    new SqlParameter("@Galete_NE", coil.nrEsp),
+                    new SqlParameter("@Galete_C", coil.C),
+                    new SqlParameter("@Galete_E", coil.E),
+                    new SqlParameter("@Galete_A", coil.A),
+                    new SqlParameter("@Galete_B", coil.B),
+                    new SqlParameter("@Galete_G", coil.G),
+                    new SqlParameter("@Galete_Re", coil.Re),
+                    new SqlParameter("@Galete_Ri", coil.Ri),
+                    new SqlParameter("@Galete_DimRadFx", coil.dimRadFx),
+                    new SqlParameter("@Galete_NF", coil.nrFx),
+                    new SqlParameter("@Galete_Sentido", coil.sentido),
+                    new SqlParameter("@Galete_Cruza", coil.cruzamentos.rawString),
+                    new SqlParameter("@Galete_SaidaAouT", coil.saidaAouT),
+                };
+
+                sqlManager.executeStoredProcedure(storedProcedure, parametrosSQL);
+
+            }
+
+            return;
+        }
+
     }
 }
 
