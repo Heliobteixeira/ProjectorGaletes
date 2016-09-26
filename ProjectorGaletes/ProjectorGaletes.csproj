@@ -65,6 +65,7 @@
     <Compile Include="Controller\SQLManager.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="Model\CoilMandrel.cs" />
+    <Compile Include="Model\GeneralConstants.cs" />
     <Compile Include="Model\PancakeCoil.cs" />
     <Compile Include="Model\PLCState.cs" />
     <Compile Include="Model\Winding.cs" />

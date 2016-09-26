@@ -90,7 +90,23 @@ namespace ProjectorGaletes
             if (dbConnection != null) dbConnection.Close();
         }
 
-        public void executeStoredProcedure(string storedProcName, SqlParameter[] sqlParameters)
+        public void executeStoredProcedure(string storedProcName) // SqlParameters are passed as reference to allow read OUT values
+        {
+            if (dbConnection == null) Connect();
+            SqlCommand cmd = new SqlCommand(storedProcName, dbConnection);
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            using (SqlDataReader rdr = cmd.ExecuteReader())
+            {
+                // iterate through results, printing each to console
+                while (rdr.Read())
+                {
+                    Console.WriteLine(rdr);
+                }
+            }
+        }
+
+        public void executeStoredProcedure(string storedProcName, ref SqlParameter[] sqlParameters) // SqlParameters are passed as reference to allow read OUT values
         {
             if (dbConnection == null) Connect();
             SqlCommand cmd = new SqlCommand(storedProcName, dbConnection);
@@ -107,6 +123,16 @@ namespace ProjectorGaletes
                 }
             }
         }
+
+        public static SqlParameter newSqlParameter(string name, object value, SqlDbType type, ParameterDirection direction = ParameterDirection.Input) 
+        {
+            SqlParameter sqlPrmtr = new SqlParameter(name, value);
+            sqlPrmtr.SqlDbType = type;
+            sqlPrmtr.Direction = direction;
+
+            return sqlPrmtr;
+        }
+
 
         /*
         public void SaveRecord(DateTime datahora, string origem, int peso)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.Data;
 
 namespace ProjectorGaletes
 {
@@ -11,14 +12,33 @@ namespace ProjectorGaletes
         //private Dictionary<string, string>[] dadosBob;
 
         private string dbConnectionString = ConfigurationManager.ConnectionStrings["DBConString"].ConnectionString;
-        private string insertCoil_StorProcName = "ENGIFOLHABOB_insertCoil";
-        private string getWindingData_StorProcName = "ENGIFOLHABOB_getDadosBobProjecto";
         private string _projecto;
-
-        public Winding(string strProjecto)
+        public string projecto
         {
-            Dictionary<string, string>[] dadosBob = Treewscallparser.getDadosBob(strProjecto);
-            parseTreewsData(dadosBob);
+            get { return _projecto; }
+        }
+        private bool _loaded = false;
+        public bool isLoaded
+        {
+            get { return _loaded; }
+            set { _loaded = value; }
+        }
+
+        public Winding(string strProjecto, bool cached = true)
+        {
+            if (cached)
+            {
+                loadDBCachedData(strProjecto);
+                isLoaded=true; // TODO: Function to check if is loaded
+            }
+            else
+            {
+                Console.WriteLine("Fetching Wintree data...");
+                Dictionary<string, string>[] dadosBob = Treewscallparser.getDadosBob(strProjecto);
+                parseTreewsData(dadosBob);
+                isLoaded=true; // TODO: Function to check if is loaded
+            }
+            
             _projecto = strProjecto;
             Console.WriteLine("Dados do projecto {0} carregados", strProjecto);
         }
@@ -113,9 +133,9 @@ namespace ProjectorGaletes
 
         }
 
-        public void cacheToDB()
+        public void cacheWindingToDB()
         {
-            string storedProcedure = insertCoil_StorProcName;
+            string storedProcedure = GeneralConstants.storProcName_insertCoil;
             SQLManager sqlManager = new SQLManager(ConfigurationManager.ConnectionStrings["DBConString"].ConnectionString);
             foreach (PancakeCoil coil in this.Values)
             {
@@ -144,12 +164,68 @@ namespace ProjectorGaletes
                     new SqlParameter("@Galete_SaidaAouT", coil.saidaAouT),
                 };
 
-                sqlManager.executeStoredProcedure(storedProcedure, parametrosSQL);
+                sqlManager.executeStoredProcedure(storedProcedure, ref parametrosSQL);
 
             }
 
+            sqlManager.Disconnect();
+
             return;
         }
+
+        public void loadDBCachedData(string project)
+        {
+            string storedProcedure = GeneralConstants.storProcName_getWindingData;
+            SQLManager sqlManager = new SQLManager(ConfigurationManager.ConnectionStrings["DBConString"].ConnectionString);
+
+            SqlParameter[] parametrosSQL = { SQLManager.newSqlParameter("@Projecto", project, SqlDbType.NChar) };
+            sqlManager.executeStoredProcedure(storedProcedure, ref parametrosSQL);
+            sqlManager.Disconnect();
+        }
+
+        public static DateTime getDBLastUpdate(string project)
+        {
+            // Returns the last cached date/time of a specified project or null if it wasn't cached at all
+
+            string storedProcedure = GeneralConstants.storProcName_getProjectCacheDate;
+            SQLManager sqlManager = new SQLManager(ConfigurationManager.ConnectionStrings["DBConString"].ConnectionString);
+            DateTime cachedDate = (DateTime)System.Data.SqlTypes.SqlDateTime.MinValue; // Date.MinValue is < than SQL minimum admissible date
+
+            SqlParameter datePrmtr = SQLManager.newSqlParameter("@cachedDate", cachedDate, SqlDbType.DateTime, ParameterDirection.Output);
+            /*
+            SqlParameter datePrmtr = new SqlParameter("@cachedDate", cachedDate);
+            datePrmtr.SqlDbType= SqlDbType.DateTime;
+            datePrmtr.Direction = ParameterDirection.Output;
+            */
+            SqlParameter[] parametrosSQL =
+            {
+                new SqlParameter("@Projecto", project),
+                datePrmtr 
+            };
+
+            sqlManager.executeStoredProcedure(storedProcedure, ref parametrosSQL);
+
+            cachedDate = (DateTime)datePrmtr.Value;
+
+            sqlManager.Disconnect();
+
+            return cachedDate;
+        }
+
+        public static int getDaysSinceLastCached(string project)
+        {
+            // Returns number of days since last caches. If it wasn't cached returns -1
+            DateTime date = getDBLastUpdate(project);
+            if (date>DateTime.MinValue) {
+                int days = (DateTime.Now -date).Days;
+                return days;
+            }
+            return -1;
+        }
+
+        
+
+
 
     }
 }

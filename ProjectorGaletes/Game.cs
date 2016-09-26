@@ -2,18 +2,27 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using OpenTK;
+using System.Configuration;
 using System.Drawing;
+using System.Diagnostics;
+using System.Net;
+using System.Timers;
+using System.Data;
+using System.Data.SqlClient;
+using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using Gwen.Control;
-using System.Diagnostics;
-using System.Net;
-using System.Timers;
+
 
 namespace ProjectorGaletes
 {
+    struct ServerDefs
+    {
+        // Common definitions loaded on SQL Server
+        public int maxCachedDays;
+    }
     class Game : GameWindow
     {
         View view;
@@ -24,6 +33,8 @@ namespace ProjectorGaletes
         private PLCState plcState = new PLCState();  //Valores realtime obtidos do PLC
 
         private ModelGraphics WindingScene;
+
+        private ServerDefs serverDefs;
 
         private float _drawRotation;
 
@@ -67,26 +78,11 @@ namespace ProjectorGaletes
         {
             get
             {
-                if (_selectedProject != null) { return _selectedProject; } else { return ""; }
+                if (conjuntoBobinagem != null) { return conjuntoBobinagem.projecto; } else { return ""; }
             }
             set
             {
-                bool success;
-                //TODO: Verificar se nome projecto é válido (REGEX)
-                //try
-                //{
-                    LoadWinding(value);
-                    success = true;
-               // }
-               // catch (Exception)
-               // {
-              //      Console.WriteLine("Não foi possível carregar o projecto '{0}'", value);
-               //     success = false;
-              //      throw;
-              //  }
-
-                if (success) { _selectedProject = value; };
-
+                selectedProjectChanged(value);
             }
         }
 
@@ -118,12 +114,10 @@ namespace ProjectorGaletes
 
         EventDrivenTCPClient client;
 
-        const int TIMEOUTSERVERPOOL = 250;
-        private Timer tmrServerPool = new Timer();
+        const int TIMEOUTPLCPOOL = 250;
+        private Timer tmrPLCPool = new Timer();
         
         string serialdatabuffer;
-
-        
 
         public Game(int width, int height)
             : base(width, height)
@@ -158,18 +152,17 @@ namespace ProjectorGaletes
             client.DataReceived += new EventDrivenTCPClient.delDataReceived(client_DataReceived);
             client.ConnectionStatusChanged += new EventDrivenTCPClient.delConnectionStatusChanged(client_ConnectionStatusChanged);
 
-            tmrServerPool.AutoReset = true;
-            tmrServerPool.Elapsed += new System.Timers.ElapsedEventHandler(tmrServerPoolTimeout_Elapsed);
-            tmrServerPool.Interval = TIMEOUTSERVERPOOL;
-
-
-
+            tmrPLCPool.AutoReset = true;
+            tmrPLCPool.Elapsed += new System.Timers.ElapsedEventHandler(tmrServerPLCTimeout_Elapsed);
+            tmrPLCPool.Interval = TIMEOUTPLCPOOL;
 
         }
 
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
+
+            loadServerSettings();
 
             //texture = ContentPipe.LoadTexture("image.png");
             //tileset = ContentPipe.LoadTexture("TileSet1.png");
@@ -192,16 +185,16 @@ namespace ProjectorGaletes
 
             //canvas.KeyboardInputEnabled = true;
 
-            gui = new GUI(canvas, selectedNewCoilComboBox, selectedWindingChanged, scaleChanged, toggledPositioning);
+            gui = new GUI(canvas, selectedNewCoilComboBox, selectedProjectChanged, scaleChanged, toggledPositioning);
 
             stopwatch.Restart();
             lastTime = 0;
 
-           
+            
 
             client.Connect();
 
-            tmrServerPool.Start();
+            tmrPLCPool.Start();
 
             recalculateGlobalAlphaInc();
 
@@ -243,6 +236,26 @@ namespace ProjectorGaletes
 
             ProjectorGaletes.Properties.Settings.Default.Save();
             Console.WriteLine("Configuraçãoes guardadas...");
+        }
+
+        private void loadServerSettings()
+        {
+            string storedProcedure = GeneralConstants.storProcName_readServerDefs;
+            SQLManager sqlManager = new SQLManager(ConfigurationManager.ConnectionStrings["DBConString"].ConnectionString);
+            int maxCachedDays = -1;
+
+            SqlParameter datePrmtr = SQLManager.newSqlParameter("@maxCachedDays", maxCachedDays, SqlDbType.Int, ParameterDirection.Output);
+
+            SqlParameter[] parametrosSQL = {
+                                               datePrmtr
+                                           };
+
+            sqlManager.executeStoredProcedure(storedProcedure, ref parametrosSQL);
+
+            maxCachedDays = (int)datePrmtr.Value;
+            serverDefs.maxCachedDays = maxCachedDays;
+
+            sqlManager.Disconnect();
         }
 
         public override void Dispose()
@@ -452,9 +465,19 @@ namespace ProjectorGaletes
             WindingScene.pancakeCoil = conjuntoBobinagem[selectedCoilNbr];
         }
 
-        private void selectedWindingChanged(string newProject)
+        private void selectedProjectChanged(string newProject)
         {
-            selectedProject = newProject;
+            LoadWinding(newProject); //TODO: Handle if LoadWinding fails
+        }
+
+        private void cacheWindingDataToDB()
+        {
+            conjuntoBobinagem.cacheWindingToDB();
+        }
+
+        private bool getDBWindingData(string project)
+        {
+            return true;
         }
 
         private void scaleChanged(float scale)
@@ -569,13 +592,39 @@ namespace ProjectorGaletes
 
         private void LoadWinding(string project)
         {
-            conjuntoBobinagem = new Winding(project);
-            conjuntoBobinagem.cacheToDB();
+            int daysSinceCache = Winding.getDaysSinceLastCached(project);
 
-            gui.fillUpAvailableCoilsComboBox(conjuntoBobinagem.coilsList());
-            //selectedCoilNbr = 1;
-            selectedCoilNbr = conjuntoBobinagem.Keys.Min(); // Selecciona a menor galete da Winding
-            WindingScene = new ModelGraphics(objectOrigin, Vector2.Zero, objectScale, 0, conjuntoBobinagem[selectedCoilNbr]);
+            if (daysSinceCache > serverDefs.maxCachedDays)
+            {
+                Console.WriteLine("Cached data too old (Days since last cache:{0}; Max cached days: {1}) ", daysSinceCache, serverDefs.maxCachedDays);
+
+                conjuntoBobinagem = new Winding(project, cached: false); // cache = false -> forces fetching wintree data
+
+                Console.WriteLine("Loaded project {0}. Caching it's data to SQL DB...", project);
+                cacheWindingDataToDB();
+                Console.WriteLine("Caching sucesscefull");
+                
+            }
+            else
+            {
+                Console.WriteLine("Cached data is recent enough (< {0} days)", serverDefs.maxCachedDays);
+                conjuntoBobinagem = new Winding(project, cached: true);
+            }
+
+            if(conjuntoBobinagem.isLoaded) 
+            {
+                selectedProject = project;
+                gui.fillUpAvailableCoilsComboBox(conjuntoBobinagem.coilsList());
+
+                // Selecciona a menor galete da Winding
+                selectedCoilNbr = conjuntoBobinagem.Keys.Min();
+
+                //Actualiza a Scene
+                WindingScene = new ModelGraphics(objectOrigin, Vector2.Zero, objectScale, 0, conjuntoBobinagem[selectedCoilNbr]);
+            }
+
+            
+              
         }
 
         private void DrawGeometry()
@@ -591,7 +640,6 @@ namespace ProjectorGaletes
             //SwapBuffers();
             
         }
-
 
         private void setView()
         {
@@ -656,12 +704,12 @@ namespace ProjectorGaletes
             processDataReceived(strData);
         }
 
-        void tmrServerPoolTimeout_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        void tmrServerPLCTimeout_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            poolServer();
+            poolPLC();
         }
 
-        void poolServer()
+        void poolPLC()
         {
             string data = "@00RH000200045C*" + Environment.NewLine;
             client.Send(data);
