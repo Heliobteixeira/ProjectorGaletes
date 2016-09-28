@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using System.IO;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 
 namespace ProjectorGaletes
@@ -175,7 +176,10 @@ namespace ProjectorGaletes
 
             Console.BufferHeight += auxLinhas.Length * (strHeaderBOBST.Length+1); // Makes space available for value logging
 
-            if (auxLinhas.Length <= 1) { throw new System.Exception("Erro no Wintree na leitura dos dados das galetes: " + rawDataString); };
+            if (auxLinhas.Length <= 1) {
+                Regex pattern = new Regex("[;,\t\r]|[\n]{2}");
+                throw new System.Exception("Erro no Wintree na leitura dos dados das galetes: " + pattern.Replace(rawDataString, "")); 
+            };
 
             result = new Dictionary<string, string>[auxLinhas.Length];
 

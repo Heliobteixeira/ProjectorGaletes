@@ -28,7 +28,9 @@ namespace ProjectorGaletes
         {
             if (cached)
             {
-                loadDBCachedData(strProjecto);
+                Console.WriteLine("Fetching SQL data...");
+                DataTable dt = loadDBCachedData(strProjecto);
+                parseSQLData(dt);
                 isLoaded=true; // TODO: Function to check if is loaded
             }
             else
@@ -44,6 +46,7 @@ namespace ProjectorGaletes
         }
 
         private void parseTreewsData(Dictionary<string, string>[] dadosBob){
+            this.Clear(); // Cleans current list of coils
             PancakeCoil auxCoil;
 
             for(int i=0; i<dadosBob.Length; i++) {
@@ -52,10 +55,23 @@ namespace ProjectorGaletes
             }
         }
 
+        private void parseSQLData(DataTable dt)
+        {
+            this.Clear(); // Cleans current list of coils
+            PancakeCoil auxCoil;
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                auxCoil = parseSQLGal(dr);
+                this.Add(auxCoil.Nr, auxCoil);
+            }
+        }
+
         private PancakeCoil parseTreewsGal(Dictionary<string, string> dadosGal){
             int nrGal;
             int nrEsp;
-            int C_mand, E_mand, Ri_mand, HR_mand, H_mand, F_mand;
+            int C_mand, E_mand, Ri_mand, HR_mand, F_mand;
+            float H_mand;
             int A, B, C, E, G, Ri, Re, nrFx, nrEspiraCruzamentos;
             int saidaAouT;
             int sentido;
@@ -65,11 +81,10 @@ namespace ProjectorGaletes
             E_mand = convertStringToInt(dadosGal["E_MANDRIL"]);
             Ri_mand = convertStringToInt(dadosGal["RI_MANDRIL"]);
             HR_mand = convertStringToInt(dadosGal["HR_MANDRIL"]);
-            H_mand = convertStringToInt(dadosGal["H_MANDRIL"]);
+            H_mand = convertStringToFloat(dadosGal["H_MANDRIL"]);
             F_mand = convertStringToInt(dadosGal["F_MANDRIL"]);
 
             CoilMandrel mandril = new CoilMandrel(C_mand, E_mand, Ri_mand, H_mand, HR_mand, F_mand);
-
 
             nrGal = convertStringToInt(dadosGal["Gal"]);
             nrEsp = convertStringToInt(dadosGal["NE"]);
@@ -101,6 +116,46 @@ namespace ProjectorGaletes
 
         }
 
+        private PancakeCoil parseSQLGal(DataRow dadosGal)
+        {
+            int nrGal;
+            int nrEsp;
+            int C_mand, E_mand, Ri_mand, HR_mand, F_mand;
+            float H_mand; 
+            int A, B, C, E, G, Ri, Re, nrFx, nrEspiraCruzamentos;
+            int saidaAouT;
+            int sentido;
+            float DimRadFx;
+
+            C_mand = (int)dadosGal["mandril_C"];
+            E_mand = (int)dadosGal["mandril_E"];
+            Ri_mand = (int)dadosGal["mandril_Ri"];
+            HR_mand = (int)dadosGal["mandril_Hr"];
+            H_mand = Convert.ToSingle(dadosGal["mandril_H"]);
+            F_mand = (int)dadosGal["mandril_F"];
+
+            CoilMandrel mandril = new CoilMandrel(C_mand, E_mand, Ri_mand, H_mand, HR_mand, F_mand);
+            
+            nrGal = (int)dadosGal["galete_Nr"];
+            nrEsp = (int)dadosGal["galete_NE"];
+            C = (int)dadosGal["galete_C"];
+            E = (int)dadosGal["galete_E"];
+            A = (int)dadosGal["galete_A"];
+            B = (int)dadosGal["galete_B"];
+            G = (int)dadosGal["galete_G"];
+            Re = (int)dadosGal["galete_Re"];
+            Ri = (int)dadosGal["galete_Ri"];
+            DimRadFx = Convert.ToSingle(dadosGal["galete_DimRadFx"]);
+            nrFx = (int)dadosGal["galete_NF"];
+            saidaAouT = (int)dadosGal["galete_SaidaAouT"];
+            sentido = (int)dadosGal["galete_Sentido"];   
+
+            nrEspiraCruzamentos = -1;  // TODO: Corrigir
+
+            return new PancakeCoil(nrGal, mandril, C, E, A, B, G, Ri, Re, DimRadFx, nrFx, nrEsp, saidaAouT, sentido, nrEspiraCruzamentos);
+
+        }
+
         public List<int> coilsList()
         {
             return new List<int>(this.Keys);
@@ -122,7 +177,7 @@ namespace ProjectorGaletes
         private float convertStringToFloat(string value)
         {
             float number;
-            bool result = float.TryParse(value.Replace(".",","), out number);
+            bool result = float.TryParse(value.Replace(".", ","), out number);
             if (result) { return number; }
             else
             {
@@ -173,23 +228,25 @@ namespace ProjectorGaletes
             return;
         }
 
-        public void loadDBCachedData(string project)
+        private DataTable loadDBCachedData(string project)
         {
             string storedProcedure = GeneralConstants.storProcName_getWindingData;
             SQLManager sqlManager = new SQLManager(ConfigurationManager.ConnectionStrings["DBConString"].ConnectionString);
 
             SqlParameter[] parametrosSQL = { SQLManager.newSqlParameter("@Projecto", project, SqlDbType.NChar) };
-            sqlManager.executeStoredProcedure(storedProcedure, ref parametrosSQL);
+            DataTable dt = sqlManager.executeStoredProcedure(storedProcedure, ref parametrosSQL);
             sqlManager.Disconnect();
+            return dt;
+
         }
 
-        public static DateTime getDBLastUpdate(string project)
+        public static DateTime? getDBLastUpdate(string project)
         {
             // Returns the last cached date/time of a specified project or null if it wasn't cached at all
 
             string storedProcedure = GeneralConstants.storProcName_getProjectCacheDate;
             SQLManager sqlManager = new SQLManager(ConfigurationManager.ConnectionStrings["DBConString"].ConnectionString);
-            DateTime cachedDate = (DateTime)System.Data.SqlTypes.SqlDateTime.MinValue; // Date.MinValue is < than SQL minimum admissible date
+            DateTime? cachedDate = (DateTime)System.Data.SqlTypes.SqlDateTime.MinValue; // Date.MinValue is < than SQL minimum admissible date
 
             SqlParameter datePrmtr = SQLManager.newSqlParameter("@cachedDate", cachedDate, SqlDbType.DateTime, ParameterDirection.Output);
             /*
@@ -205,22 +262,35 @@ namespace ProjectorGaletes
 
             sqlManager.executeStoredProcedure(storedProcedure, ref parametrosSQL);
 
-            cachedDate = (DateTime)datePrmtr.Value;
+
+            if (!(datePrmtr.Value is DBNull))
+            {
+                cachedDate = (DateTime)datePrmtr.Value;
+            }
+            else 
+            {
+                cachedDate = null;
+            }
 
             sqlManager.Disconnect();
 
             return cachedDate;
         }
 
-        public static int getDaysSinceLastCached(string project)
+        public static int? getDaysSinceLastCached(string project)
         {
             // Returns number of days since last caches. If it wasn't cached returns -1
-            DateTime date = getDBLastUpdate(project);
-            if (date>DateTime.MinValue) {
-                int days = (DateTime.Now -date).Days;
+            DateTime? date = getDBLastUpdate(project);
+            if(date.HasValue)
+            {
+                int days = (DateTime.Now - date.Value).Days;
                 return days;
             }
-            return -1;
+            else 
+            {
+                return null;
+            }
+            
         }
 
         

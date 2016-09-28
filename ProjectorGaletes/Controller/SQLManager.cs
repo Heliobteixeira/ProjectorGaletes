@@ -90,23 +90,21 @@ namespace ProjectorGaletes
             if (dbConnection != null) dbConnection.Close();
         }
 
-        public void executeStoredProcedure(string storedProcName) // SqlParameters are passed as reference to allow read OUT values
+        public DataTable executeStoredProcedure(string storedProcName) // SqlParameters are passed as reference to allow read OUT values
         {
             if (dbConnection == null) Connect();
             SqlCommand cmd = new SqlCommand(storedProcName, dbConnection);
             cmd.CommandType = CommandType.StoredProcedure;
 
-            using (SqlDataReader rdr = cmd.ExecuteReader())
-            {
-                // iterate through results, printing each to console
-                while (rdr.Read())
-                {
-                    Console.WriteLine(rdr);
-                }
-            }
+            DataTable dt = new DataTable();
+            SqlDataReader rdr = cmd.ExecuteReader();
+
+            dt.Load(rdr);
+
+            return dt;
         }
 
-        public void executeStoredProcedure(string storedProcName, ref SqlParameter[] sqlParameters) // SqlParameters are passed as reference to allow read OUT values
+        public DataTable executeStoredProcedure(string storedProcName, ref SqlParameter[] sqlParameters) // SqlParameters are passed as reference to allow read OUT values
         {
             if (dbConnection == null) Connect();
             SqlCommand cmd = new SqlCommand(storedProcName, dbConnection);
@@ -114,14 +112,12 @@ namespace ProjectorGaletes
 
             cmd.Parameters.AddRange(sqlParameters);
 
-            using (SqlDataReader rdr = cmd.ExecuteReader())
-            {
-                // iterate through results, printing each to console
-                while (rdr.Read())
-                {
-                    Console.WriteLine(rdr);
-                }
-            }
+            DataTable dt = new DataTable();
+            SqlDataReader rdr = cmd.ExecuteReader();
+
+            dt.Load(rdr);
+
+            return dt;
         }
 
         public static SqlParameter newSqlParameter(string name, object value, SqlDbType type, ParameterDirection direction = ParameterDirection.Input) 

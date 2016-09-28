@@ -82,7 +82,7 @@ namespace ProjectorGaletes
             }
             set
             {
-                selectedProjectChanged(value);
+                _selectedProject = value;
             }
         }
 
@@ -190,8 +190,6 @@ namespace ProjectorGaletes
             stopwatch.Restart();
             lastTime = 0;
 
-            
-
             client.Connect();
 
             tmrPLCPool.Start();
@@ -214,7 +212,7 @@ namespace ProjectorGaletes
 
             rotationOffset = ProjectorGaletes.Properties.Settings.Default.rotationOffset;
 
-            turnOffset = ProjectorGaletes.Properties.Settings.Default.turnOffset;
+            //turnOffset = ProjectorGaletes.Properties.Settings.Default.turnOffset;
 
             Console.WriteLine("Configuraçãoes carregadas...");
         }
@@ -232,9 +230,11 @@ namespace ProjectorGaletes
 
             ProjectorGaletes.Properties.Settings.Default.rotationOffset = rotationOffset;
 
-            ProjectorGaletes.Properties.Settings.Default.turnOffset = turnOffset;
+            //ProjectorGaletes.Properties.Settings.Default.turnOffset = turnOffset;
 
             ProjectorGaletes.Properties.Settings.Default.Save();
+
+            // TODO: Save last selected winding/coil
             Console.WriteLine("Configuraçãoes guardadas...");
         }
 
@@ -246,9 +246,7 @@ namespace ProjectorGaletes
 
             SqlParameter datePrmtr = SQLManager.newSqlParameter("@maxCachedDays", maxCachedDays, SqlDbType.Int, ParameterDirection.Output);
 
-            SqlParameter[] parametrosSQL = {
-                                               datePrmtr
-                                           };
+            SqlParameter[] parametrosSQL = {datePrmtr};
 
             sqlManager.executeStoredProcedure(storedProcedure, ref parametrosSQL);
 
@@ -271,6 +269,7 @@ namespace ProjectorGaletes
         /// </summary>
         /// <param name="sender">The KeyboardDevice which generated this event.</param>
         /// <param name="e">The key that was pressed.</param>
+
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
         {
             if (e.Key == global::OpenTK.Input.Key.Escape)
@@ -462,6 +461,7 @@ namespace ProjectorGaletes
         {
             selectedCoilNbr = newCoilNbr;
             gui.coil = conjuntoBobinagem[selectedCoilNbr];
+            turnOffset = 0; // Resets coil turn offset
             WindingScene.pancakeCoil = conjuntoBobinagem[selectedCoilNbr];
         }
 
@@ -592,24 +592,39 @@ namespace ProjectorGaletes
 
         private void LoadWinding(string project)
         {
-            int daysSinceCache = Winding.getDaysSinceLastCached(project);
+            int? daysSinceCache = Winding.getDaysSinceLastCached(project);
 
-            if (daysSinceCache > serverDefs.maxCachedDays)
+            if (daysSinceCache.HasValue) // ...has been cached
             {
-                Console.WriteLine("Cached data too old (Days since last cache:{0}; Max cached days: {1}) ", daysSinceCache, serverDefs.maxCachedDays);
+                if (daysSinceCache < serverDefs.maxCachedDays)
+                {
+                    Console.WriteLine("Cached data is recent enough (< {0} days)", serverDefs.maxCachedDays);
+                    conjuntoBobinagem = new Winding(project, cached: true);
+                    Console.WriteLine("Loaded project {0}");
+
+                }
+                else
+                {
+                    Console.WriteLine("Cached data too old (Days since last cache:{0}; Max cached days: {1}). Loading Wintree data ", daysSinceCache, serverDefs.maxCachedDays);
+
+                    conjuntoBobinagem = new Winding(project, cached: false); // cache = false -> forces fetching wintree data
+
+                    Console.WriteLine("Loaded project {0}. Caching it's data to SQL DB...", project);
+                    cacheWindingDataToDB();
+                    Console.WriteLine("Caching sucesscefull");
+                }
+            }
+            else
+            {
+                Console.WriteLine("{0} was never cached. Loading Wintree data", project);
 
                 conjuntoBobinagem = new Winding(project, cached: false); // cache = false -> forces fetching wintree data
 
                 Console.WriteLine("Loaded project {0}. Caching it's data to SQL DB...", project);
                 cacheWindingDataToDB();
                 Console.WriteLine("Caching sucesscefull");
-                
             }
-            else
-            {
-                Console.WriteLine("Cached data is recent enough (< {0} days)", serverDefs.maxCachedDays);
-                conjuntoBobinagem = new Winding(project, cached: true);
-            }
+            
 
             if(conjuntoBobinagem.isLoaded) 
             {
@@ -623,8 +638,6 @@ namespace ProjectorGaletes
                 WindingScene = new ModelGraphics(objectOrigin, Vector2.Zero, objectScale, 0, conjuntoBobinagem[selectedCoilNbr]);
             }
 
-            
-              
         }
 
         private void DrawGeometry()

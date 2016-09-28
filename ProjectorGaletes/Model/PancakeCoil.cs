@@ -48,7 +48,7 @@ namespace ProjectorGaletes
         // H medio em A antes do eixo na zona de transição (incluindo enchimento)
         public float Hmed_A
         {
-            get { return (float)A / nrEsp; }
+            get { return A / nrEsp; }
         }
 
         // H medio em A antes do eixo (incluindo enchimento)
@@ -66,19 +66,19 @@ namespace ProjectorGaletes
         // H medio em G (incluindo enchimento)
         public float Hmed_G
         {
-            get { return (float)G / (nrEsp); } // ??? Nas galetes com maior numero de espiras nao preenche completamente o G ???
+            get { return G / (nrEsp); } // ??? Nas galetes com maior numero de espiras nao preenche completamente o G ???
         }
 
         // H medio em B (incluindo enchimento)
         public float Hmed_B
         {
-            get { return (float)B / nrEsp; }
+            get { return B / nrEsp; }
         }
 
         // H medio em R (incluindo enchimento)
         public float Hmed_R
         {
-            get { return ((float)Re - mandrel.Ri) / nrEsp; }
+            get { return (Re - mandrel.Ri) / nrEsp; }
         }
 
         public string sentidoDesc
@@ -100,7 +100,7 @@ namespace ProjectorGaletes
             }
             
         }
-        
+
 
 
         public PancakeCoil(int nrGal, CoilMandrel mandril, int C, int E, int A, int B, int G, int Ri, int Re, float dimRadFx, int nrFx, int nrEsp, int saidaAouT, int sentido, int nrEspiraCruzamentos)
