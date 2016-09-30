@@ -10,12 +10,12 @@ namespace ProjectorGaletes
             public float H;
             public float W;
             public float Dist;
-            public int espira;
+            public int[] espiras;
             public int count;
 
-            public string rawString
+            public string csvString
             {
-                get { return "***cruzamentos***"; }
+                get { return String.Join(";",espiras); }
             }
         }
 
@@ -48,37 +48,37 @@ namespace ProjectorGaletes
         // H medio em A antes do eixo na zona de transição (incluindo enchimento)
         public float Hmed_A
         {
-            get { return A / nrEsp; }
+            get { return A / (float)nrEsp; }
         }
 
         // H medio em A antes do eixo (incluindo enchimento)
         public float Hmed_A1
         {
-            get { return (A - mandrel.H) / nrEsp; }
+            get { return (A - mandrel.H) / (float)nrEsp; }
         }
 
         // H medio em A depois do eixo (incluindo enchimento)
         public float Hmed_A2
         {
-            get { return (A - mandrel.H) / nrEsp; }
+            get { return (A - mandrel.H) / (float)nrEsp; }
         }
 
         // H medio em G (incluindo enchimento)
         public float Hmed_G
         {
-            get { return G / (nrEsp); } // ??? Nas galetes com maior numero de espiras nao preenche completamente o G ???
+            get { return G / (float)nrEsp; } // ??? Nas galetes com maior numero de espiras nao preenche completamente o G ???
         }
 
         // H medio em B (incluindo enchimento)
         public float Hmed_B
         {
-            get { return B / nrEsp; }
+            get { return B / (float)nrEsp; }
         }
 
         // H medio em R (incluindo enchimento)
         public float Hmed_R
         {
-            get { return (Re - mandrel.Ri) / nrEsp; }
+            get { return (Re - mandrel.Ri) / (float)nrEsp; }
         }
 
         public string sentidoDesc
@@ -95,15 +95,13 @@ namespace ProjectorGaletes
                 }
                 else
                 {
-                    return new CoilMandrel(this.C, this.E, this.Ri, this.H, 0, 0);
+                    return new CoilMandrel(this.C, this.E, this.Ri, this.H, 0, 0); // TODO: Não faz muito sentido criar nova instancia...
                 }
             }
             
         }
 
-
-
-        public PancakeCoil(int nrGal, CoilMandrel mandril, int C, int E, int A, int B, int G, int Ri, int Re, float dimRadFx, int nrFx, int nrEsp, int saidaAouT, int sentido, int nrEspiraCruzamentos)
+        public PancakeCoil(int nrGal, CoilMandrel mandril, int C, int E, int A, int B, int G, int Ri, int Re, float dimRadFx, int nrFx, int nrEsp, int saidaAouT, int sentido, int[] nrEspiraCruzamentos)
         {
             this.Nr=nrGal;
             this._mandrel = mandril;
@@ -123,7 +121,7 @@ namespace ProjectorGaletes
             this.cruzamentos.H = Hmed_B;
             this.cruzamentos.W = 150;    // TODO: Valor hipotetico
             this.cruzamentos.Dist = 150; // TODO: Valor hipotetico
-            this.cruzamentos.espira = nrEspiraCruzamentos;
+            this.cruzamentos.espiras = nrEspiraCruzamentos;
             this.cruzamentos.count = nrFx; // TODO: Valor hipotetico
         }
     }

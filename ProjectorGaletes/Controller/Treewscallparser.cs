@@ -87,7 +87,6 @@ namespace ProjectorGaletes
             }
         }
 
-
         public static Dictionary<string, string>[] getDadosBob(string strProjecto)
         {
             Dictionary<string, string>[] result;

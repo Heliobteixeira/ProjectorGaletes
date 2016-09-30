@@ -598,29 +598,29 @@ namespace ProjectorGaletes
             {
                 if (daysSinceCache < serverDefs.maxCachedDays)
                 {
-                    Console.WriteLine("Cached data is recent enough (< {0} days)", serverDefs.maxCachedDays);
+                    Console.WriteLine(String.Format("Cached data is recent enough (< {0} days)", serverDefs.maxCachedDays));
                     conjuntoBobinagem = new Winding(project, cached: true);
                     Console.WriteLine("Loaded project {0}");
 
                 }
                 else
                 {
-                    Console.WriteLine("Cached data too old (Days since last cache:{0}; Max cached days: {1}). Loading Wintree data ", daysSinceCache, serverDefs.maxCachedDays);
+                    Console.WriteLine(String.Format("Cached data too old (Days since last cache:{0}; Max cached days: {1}). Loading Wintree data ", daysSinceCache, serverDefs.maxCachedDays));
 
                     conjuntoBobinagem = new Winding(project, cached: false); // cache = false -> forces fetching wintree data
 
-                    Console.WriteLine("Loaded project {0}. Caching it's data to SQL DB...", project);
+                    Console.WriteLine(String.Format("Loaded project {0}. Caching it's data to SQL DB...", project));
                     cacheWindingDataToDB();
                     Console.WriteLine("Caching sucesscefull");
                 }
             }
             else
             {
-                Console.WriteLine("{0} was never cached. Loading Wintree data", project);
+                Console.WriteLine(String.Format("{0} was never cached. Loading Wintree data", project));
 
                 conjuntoBobinagem = new Winding(project, cached: false); // cache = false -> forces fetching wintree data
 
-                Console.WriteLine("Loaded project {0}. Caching it's data to SQL DB...", project);
+                Console.WriteLine(String.Format("Loaded project {0}. Caching it's data to SQL DB...", project));
                 cacheWindingDataToDB();
                 Console.WriteLine("Caching sucesscefull");
             }

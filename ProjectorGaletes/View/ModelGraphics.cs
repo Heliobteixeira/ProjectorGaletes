@@ -60,7 +60,6 @@ namespace ProjectorGaletes
             set { _blinkAlpha = value; }
         }
 
-
         public ModelGraphics(Vector2 origin, Vector2 position, Vector2 scale, float rotation, PancakeCoil coil)
         {
             modelOrigin = origin;
@@ -86,12 +85,12 @@ namespace ProjectorGaletes
 
         public static void DrawTurns(Color color, Vector2 position, Vector2 scale, float rotation, Vector2 origin, PancakeCoil coil, int maxTurns = -1)
         {
-            int C = coil.mandrel.C;
-            int E = coil.mandrel.E;
-            int Ri = coil.mandrel.Ri;
-            float H = coil.mandrel.H;
-            int HR = coil.mandrel.HR;
-            int F = coil.mandrel.F;
+            float C = (float)coil.mandrel.C;
+            float E = (float)coil.mandrel.E;
+            float Ri = (float)coil.mandrel.Ri;
+            float H = (float)coil.mandrel.H;
+            float HR = (float)coil.mandrel.HR;
+            float F = (float)coil.mandrel.F;
 
             double auxA, auxB, auxD, auxL;
             int auxAlpha, auxBeta;
@@ -114,7 +113,7 @@ namespace ProjectorGaletes
                     auxB = Ri - HR + H;
                  * 
                  */
-                auxA = E / 2 - F + coil.Hmed_G * esp - R;
+                auxA = E / 2.0f - F + coil.Hmed_G * esp - R;
                 auxB = R - HR + H;
                 auxD = Math.Sqrt(auxA * auxA + auxB * auxB);
                 auxL = Math.Sqrt(auxD * auxD - R * R);
@@ -125,35 +124,35 @@ namespace ProjectorGaletes
                 }
                 else
                 {
-                    auxAlpha = (int)(Math.Atan(R / auxL) * 180 / 3.1416);
+                    auxAlpha = (int)(Math.Atan(R / auxL) * 180.0f / 3.1416);
                 }
 
-                auxBeta = (int)(Math.Atan(auxA / auxB) * 180 / 3.1416);
+                auxBeta = (int)(Math.Atan(auxA / auxB) * 180.0f / 3.1416);
 
                 // Load geometry array
                 if (esp == 1)
                 {
                     //vertices.Add(new Vector2 ((float)-F, C/2+coil.Hmed_A1*esp));
-                    vertices.Add(new Vector2((float)-F, C / 2 + coil.mandrel.H));
+                    vertices.Add(new Vector2(-F, C / 2.0f + coil.mandrel.H));
                 }
 
-                arcCenter.X = E / 2 + (coil.Hmed_G * esp) - R;
-                arcCenter.Y = C / 2 + coil.Hmed_A2 * esp - R;
+                arcCenter.X = E / 2.0f + coil.Hmed_G * (float)esp - R;
+                arcCenter.Y = C / 2.0f + coil.Hmed_A2 * (float)esp - R;
                 DrawArc(ref vertices, arcCenter, 90, 0, R);
 
-                arcCenter.X = E / 2 + (coil.Hmed_G * esp) - R;
-                arcCenter.Y = -(C / 2 + coil.Hmed_B * esp) + R;
+                arcCenter.X = E / 2.0f + coil.Hmed_G * (float)esp - R;
+                arcCenter.Y = -(C / 2.0f + coil.Hmed_B * (float)esp) + R;
                 DrawArc(ref vertices, arcCenter, 0, -90, R);
 
-                arcCenter.X = -(E / 2 + (coil.Hmed_G * esp) - R);
-                arcCenter.Y = -(C / 2 + coil.Hmed_B * esp) + R;
+                arcCenter.X = -(E / 2.0f + coil.Hmed_G * (float)esp - R);
+                arcCenter.Y = -(C / 2.0f + coil.Hmed_B * (float)esp) + R;
                 DrawArc(ref vertices, arcCenter, -90, -180, R);
 
-                arcCenter.X = -(E / 2 + (coil.Hmed_G * esp) - R);
-                arcCenter.Y = C / 2 + coil.Hmed_A * esp - R + HR;
+                arcCenter.X = -(E / 2.0f + coil.Hmed_G * (float)esp - R);
+                arcCenter.Y = C / 2.0f + coil.Hmed_A * (float)esp - R + HR;
                 DrawArc(ref vertices, arcCenter, -180, -180 - auxAlpha - auxBeta, R);
 
-                vertices.Add(new Vector2((float)-F, (float)C / 2 + H + coil.Hmed_A1 * esp));
+                vertices.Add(new Vector2(-F, C / 2 + H + coil.Hmed_A1 * esp));
             }
 
             DrawMultiLine(vertices, color, position, scale, rotation, origin, continuous: false);

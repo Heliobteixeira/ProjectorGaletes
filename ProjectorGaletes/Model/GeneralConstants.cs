@@ -11,5 +11,7 @@ namespace ProjectorGaletes
         public const string storProcName_getWindingData = "ENGIFOLHABOB_getDadosBobProjecto";
         public const string storProcName_getProjectCacheDate = "ENGIFOLHABOB_getProjectCacheDate";
         public const string storProcName_readServerDefs = "ProjectorGaletes_readServerDefs";
+
+
     }
 }

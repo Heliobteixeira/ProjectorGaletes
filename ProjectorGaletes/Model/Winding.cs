@@ -72,7 +72,8 @@ namespace ProjectorGaletes
             int nrEsp;
             int C_mand, E_mand, Ri_mand, HR_mand, F_mand;
             float H_mand;
-            int A, B, C, E, G, Ri, Re, nrFx, nrEspiraCruzamentos;
+            int A, B, C, E, G, Ri, Re, nrFx;
+            int[] nrEspiraCruzamentos;
             int saidaAouT;
             int sentido;
             float DimRadFx;
@@ -109,8 +110,8 @@ namespace ProjectorGaletes
                 sentido = 0;
             }
 
-            Regex digitsOnly = new Regex(@"[^\d]");
-            nrEspiraCruzamentos = convertStringToInt(digitsOnly.Replace(dadosGal["CRUZA"], ""));
+
+            nrEspiraCruzamentos = parseEspirasCruzamentos(dadosGal["CRUZA"]);
 
             return new PancakeCoil(nrGal, mandril, C, E, A, B, G, Ri, Re, DimRadFx, nrFx, nrEsp, saidaAouT, sentido, nrEspiraCruzamentos);         
 
@@ -122,7 +123,8 @@ namespace ProjectorGaletes
             int nrEsp;
             int C_mand, E_mand, Ri_mand, HR_mand, F_mand;
             float H_mand; 
-            int A, B, C, E, G, Ri, Re, nrFx, nrEspiraCruzamentos;
+            int A, B, C, E, G, Ri, Re, nrFx;
+            int[] nrEspiraCruzamentos;
             int saidaAouT;
             int sentido;
             float DimRadFx;
@@ -148,12 +150,20 @@ namespace ProjectorGaletes
             DimRadFx = Convert.ToSingle(dadosGal["galete_DimRadFx"]);
             nrFx = (int)dadosGal["galete_NF"];
             saidaAouT = (int)dadosGal["galete_SaidaAouT"];
-            sentido = (int)dadosGal["galete_Sentido"];   
+            sentido = (int)dadosGal["galete_Sentido"];
 
-            nrEspiraCruzamentos = -1;  // TODO: Corrigir
+            nrEspiraCruzamentos = parseEspirasCruzamentos((string)dadosGal["galete_Cruza"]);  // TODO: Corrigir
 
             return new PancakeCoil(nrGal, mandril, C, E, A, B, G, Ri, Re, DimRadFx, nrFx, nrEsp, saidaAouT, sentido, nrEspiraCruzamentos);
 
+        }
+
+        private int[] parseEspirasCruzamentos(string rawWTStringCruzamentos)
+        {
+            string[] arrayCruzamentos;
+            string[] splitChars = {"*", ";"};
+            arrayCruzamentos = rawWTStringCruzamentos.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);  // '*' -> Wintree     ';' -> DB
+            return Array.ConvertAll(arrayCruzamentos, s => Int32.Parse(s));
         }
 
         public List<int> coilsList()
@@ -215,7 +225,7 @@ namespace ProjectorGaletes
                     new SqlParameter("@Galete_DimRadFx", coil.dimRadFx),
                     new SqlParameter("@Galete_NF", coil.nrFx),
                     new SqlParameter("@Galete_Sentido", coil.sentido),
-                    new SqlParameter("@Galete_Cruza", coil.cruzamentos.rawString),
+                    new SqlParameter("@Galete_Cruza", coil.cruzamentos.csvString),
                     new SqlParameter("@Galete_SaidaAouT", coil.saidaAouT),
                 };
 
@@ -292,10 +302,6 @@ namespace ProjectorGaletes
             }
             
         }
-
-        
-
-
 
     }
 }

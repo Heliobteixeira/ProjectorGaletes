@@ -79,6 +79,7 @@ namespace ProjectorGaletes
         private GLPropertyTree propsPancakeCoil;
         private Gwen.Control.Properties mandrelProps;
         private Gwen.Control.Properties coilProps;
+        private Gwen.Control.Properties cruzProps;
 
         private changedSelectedCoilDelegate coilChangedCallback;
         private changedWindingDelegate projectChangedCallback;
@@ -205,7 +206,7 @@ namespace ProjectorGaletes
             m_Center = new Center(this);
             m_Center.Dock = Pos.Fill;
 
-            GUnit test;
+            //GUnit test;
 
             GLGrid gridPos = new GLGrid();
 
@@ -256,7 +257,7 @@ namespace ProjectorGaletes
             createPositionLabels();
 
             m_StatusBar.SendToBack();
-            PrintText("Unit Test started!");
+            //PrintText("Unit Test started!");
         }
 
         private int PosRow(int row)
@@ -441,7 +442,7 @@ namespace ProjectorGaletes
 
 
             propsPancakeCoil = new GLPropertyTree(bob_List, 0, 400);
-            propsPancakeCoil.SetBounds(0, 45, 180, 300);
+            propsPancakeCoil.SetBounds(0, 45, 180, 650);
 
             mandrelProps = propsPancakeCoil.Add("Mandril");
             mandrelProps.Add("Valid", mandrel.isValid.ToString());
@@ -475,7 +476,14 @@ namespace ProjectorGaletes
             coilProps.Add("Hmed_G", coil.Hmed_G.ToString());
             coilProps.Add("Hmed_B", coil.Hmed_B.ToString());
             coilProps.Add("Hmed_R", coil.Hmed_R.ToString());
-            
+
+            cruzProps = propsPancakeCoil.Add("Cruzamentos");
+            cruzProps.Add("Count", coil.cruzamentos.count.ToString());
+            cruzProps.Add("H", coil.cruzamentos.H.ToString());
+            cruzProps.Add("W", coil.cruzamentos.W.ToString());
+            cruzProps.Add("Distancia", coil.cruzamentos.Dist.ToString());
+            cruzProps.Add("Espiras", coil.cruzamentos.csvString);
+
             propsPancakeCoil.ExpandAll();
         }
                 
