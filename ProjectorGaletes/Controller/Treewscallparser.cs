@@ -47,8 +47,8 @@ namespace ProjectorGaletes
         private static string getRawDadosBob2(string strProjecto)
         {
             string serverport = "treefnc1:8899";
-            string user = "1520";
-            string password = "thunde";
+            string user = "fati";
+            string password = "fati";
             string cmd = "WtAcessPoint";
             string func = "ENGIFOLHABOB";
             string parms = string.Format("{0}+{1}", func, strProjecto );
